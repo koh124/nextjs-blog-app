@@ -3,6 +3,14 @@ import path from "path";
 import fs from "fs";
 import matter from "gray-matter";
 
+// getPostsDataの戻り値を明示するための型定義
+export interface AllPostsData {
+  id: string,
+  title: string,
+  date: string,
+  thumbnail: string
+}
+
 // cwd=カレントディレクトリ
 // postsへのパスを取得する
 const postsDirectory = path.join(process.cwd(), "posts");
@@ -10,7 +18,7 @@ const postsDirectory = path.join(process.cwd(), "posts");
 // mdファイルのデータを取り出す
 // fs.readFileSyncは引数にディレクトリへのパスを渡すと配下のファイル名の配列を返し、
 // ファイルへのフルパスを渡すとそのファイルをreadする
-export function getPostsData() {
+export function getPostsData(): AllPostsData[]  {
   // ['pre-rendering-about.md', 'pre-rendering.md', 'react-next.md', 'ssg-ssr.md']
   const fileNames = fs.readdirSync(postsDirectory);
 
@@ -20,17 +28,31 @@ export function getPostsData() {
     const id = fileName.replace(/\.md$/, "");
     console.log(id);
 
+    // .mdファイルへの直接のパス
     const fullPath = path.join(postsDirectory, fileName);
+
+    // ファイルのテキストを読み出す
     const fileContents = fs.readFileSync(fullPath, "utf8");
     console.log(fileContents);
 
     const matterRes = matter(fileContents);
+    console.log(matterRes.data, 'here is data');
 
-    // idとデータを返す
+    // スプレッド構文を利用すれば記述は簡潔だが、
+    // matterは実行しないと結果が分からないため静的解析が不可能
+    // よってtypescriptに怒られる
+    // return {
+    //   id,
+    //   ...matterRes.data
+    // }
+
     return {
       id,
-      ...matterRes.data
+      title: matterRes.data.title,
+      date: matterRes.data.date,
+      thumbnail: matterRes.data.thumbnail
     }
   });
+  console.log(allPostsNames);
   return allPostsNames;
 }
