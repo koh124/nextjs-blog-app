@@ -2,6 +2,8 @@
 import path from "path";
 import fs from "fs";
 import matter from "gray-matter";
+import { remark } from "remark";
+import html from "remark-html";
 
 // getPostsDataの戻り値を明示するための型定義
 export interface AllPostsData {
@@ -55,4 +57,35 @@ export function getPostsData(): AllPostsData[]  {
   });
   console.log(allPostsNames);
   return allPostsNames;
+}
+
+// getStaticPathでreturnで使うpathを取得する
+export function getAllPostIds() {
+  const fileNames = fs.readdirSync(postsDirectory);
+
+  return fileNames.map((filename) => {
+    return {
+      params: {
+        id: filename.replace(/\.md$/, ""),
+      },
+    }
+  })
+}
+
+// idに基づいてブログ投稿データを返す
+export async function getPostData(id: string) {
+  const fullPath = path.join(postsDirectory, `${id}.md`);
+  const fileContents = fs.readFileSync(fullPath, 'utf8');
+
+  const matterResult = matter(fileContents);
+  // const blogContentHTML = matterResult.content
+
+  const blogContent = await remark().use(html).process(matterResult.content)
+  const blogContentHTML = blogContent.toString();
+
+  return {
+    id,
+    blogContentHTML,
+    ...matterResult.data,
+  }
 }
